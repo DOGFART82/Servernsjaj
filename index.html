@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رادار USDT السحابي</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0b0e14; color: #e2e8f0; margin: 0; padding: 15px; direction: rtl; }
+        .card { background: #1a1f2e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-right: 5px solid #3b82f6; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .live-tag { background: #ef4444; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; animation: blink 1.2s infinite; font-size: 12px; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .status-info { font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: #1a1f2e; border-radius: 10px; overflow: hidden; }
+        th { background: #242b3d; color: #60a5fa; padding: 15px; text-align: right; font-size: 14px; border-bottom: 2px solid #3b82f6; }
+        td { padding: 15px; border-bottom: 1px solid #242b3d; font-size: 14px; }
+        .amount { color: #10b981; font-weight: bold; font-size: 1.1rem; }
+        .time { font-family: monospace; color: #94a3b8; }
+        .btn-check { display: inline-block; color: #3b82f6; text-decoration: none; font-weight: bold; font-size: 12px; border: 1px solid #3b82f6; padding: 5px 10px; border-radius: 5px; transition: 0.3s; }
+        .btn-check:hover { background: #3b82f6; color: white; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin:0; font-size: 1.2rem;">رادار USDT السحابي</h2>
+            <span class="live-tag">مباشر 5ث</span>
+        </div>
+        <div class="status-info">
+            <span id="status">مزامنة سحابية نشطة...</span>
+            <span id="last-sync">--:--:--</span>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>الوقت</th>
+                <th>المبلغ</th>
+                <th>الفحص</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr><td colspan="3" style="text-align:center; padding:50px;">جاري المزامنة مع السيرفر السحابي...</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        let lastTimestamp = 0;
+        async function fetchFromCloud() {
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+                
+                if (data.timestamp !== lastTimestamp) {
+                    lastTimestamp = data.timestamp;
+                    const tbody = document.getElementById('tableBody');
+                    
+                    if (data.operations.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">لا توجد عمليات مطابقة حالياً</td></tr>';
+                    } else {
+                        tbody.innerHTML = data.operations.map(op => `
+                            <tr>
+                                <td class="time">${new Date(op.timestamp * 1000).toLocaleTimeString('ar-EG')}</td>
+                                <td class="amount">${parseFloat(op.value).toLocaleString()} USDT</td>
+                                <td><a href="https://etherscan.io/tx/${op.transactionHash}" target="_blank" class="btn-check">فحص ↗</a></td>
+                            </tr>
+                        `).join('');
+                    }
+                    document.getElementById('status').innerText = "متصل - السيرفر يراقب البلوكشين";
+                    document.getElementById('last-sync').innerText = "تحديث: " + new Date(data.timestamp).toLocaleTimeString();
+                }
+            } catch (err) {
+                document.getElementById('status').innerText = "خطأ في الاتصال بالسيرفر!";
+            }
+        }
+        setInterval(fetchFromCloud, 5000);
+        fetchFromCloud();
+    </script>
+</body>
+</html>
+
