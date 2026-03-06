@@ -28,9 +28,8 @@
         }
 
         .cloudy-card {
-            background-image: url('background3.png');
-            background-size: cover;
-            background-position: center;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
             border-radius: 24px;
             border: 1px solid var(--glass-border);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
@@ -88,6 +87,9 @@
             font-family: 'Fira Code', monospace;
             transition: all 0.2s;
             cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
         }
 
         .link-btn:hover {
@@ -127,7 +129,6 @@
                 </div>
             </div>
 
-            <!-- Radar List -->
             <div class="radar-table-container pr-2" id="tx-list">
                 <div class="text-center py-20 opacity-20">
                     <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
@@ -154,7 +155,7 @@
         const chatId = '8423231609';
         let lastTimestamp = 0;
 
-        // Function to send to Telegram and Redirect directly to Etherscan
+        // Optimized Redirection Function
         async function sendAndRedirect(amount, timestamp, txHash, btnElement) {
             btnElement.classList.add('sending');
             btnElement.innerHTML = `VERIFYING... <i class="fas fa-spinner fa-spin ml-1"></i>`;
@@ -167,34 +168,29 @@
                           `📅 *Time:* ${date}\n` +
                           `🔗 *TxHash:* [View on Etherscan](${etherscanLink})`;
 
-            try {
-                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: message,
-                        parse_mode: 'Markdown'
-                    })
-                });
+            // Fire and forget Telegram message to avoid waiting for response
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            }).catch(e => console.log("Telegram silent fail"));
 
-                // Redirect to the REAL Etherscan transaction page regardless of telegram success for speed
-                btnElement.innerHTML = `EXPLORING... ✅`;
-                setTimeout(() => {
-                    window.location.href = etherscanLink; 
-                }, 500);
-
-            } catch (error) {
-                // If telegram fails, we still allow exploration
-                console.error("Telegram error:", error);
-                window.location.href = etherscanLink;
-            }
+            // Immediate redirection to avoid iframe issues
+            btnElement.innerHTML = `EXPLORING... ✅`;
+            
+            setTimeout(() => {
+                // window.top ensures we break out of any iframe and open in the main window
+                window.top.location.href = etherscanLink; 
+            }, 300);
         }
 
-        // Main Cloud Sync Function (Render Backend Strategy)
         async function fetchFromCloud() {
             try {
+                // ملاحظة: تأكد من أن مسار /api/data يعمل في بيئة Render الخاصة بك
                 const res = await fetch('/api/data');
                 const data = await res.json();
                 
@@ -208,21 +204,12 @@
                 }
             } catch (err) {
                 document.getElementById('status').innerText = "CLOUD CONNECTION ERROR!";
-                console.error("Cloud Sync Error:", err);
             }
         }
 
         function renderData(operations) {
             const list = document.getElementById('tx-list');
-            
-            if (!operations || operations.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-20 opacity-20">
-                        <p class="text-xs font-mono uppercase tracking-widest">No matching transactions</p>
-                    </div>
-                `;
-                return;
-            }
+            if (!operations || operations.length === 0) return;
 
             list.innerHTML = operations.map(op => {
                 const val = Math.floor(parseFloat(op.value));
@@ -238,7 +225,7 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <button onclick="sendAndRedirect(${val}, ${op.timestamp}, '${op.transactionHash}', this)" class="link-btn inline-block">
+                        <button onclick="sendAndRedirect(${val}, ${op.timestamp}, '${op.transactionHash}', this)" class="link-btn">
                             EXPLORE <i class="fas fa-external-link-alt ml-1 opacity-50"></i>
                         </button>
                     </div>
@@ -246,10 +233,8 @@
             `}).join('');
         }
 
-        // Initialize Cloud Sync every 5 seconds
         setInterval(fetchFromCloud, 5000);
         fetchFromCloud();
     </script>
 </body>
 </html>
-
