@@ -5,7 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const API_URL = 'https://api.ethplorer.io/getTokenHistory/0xdac17f958d2ee523a2206206994597c13d831ec7?apiKey=freekey&limit=50';
-const TARGET_AMOUNTS = [100, 150, 500, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000];
+const TARGET_AMOUNTS = [100000, 150000, 500000, 1000000, 1500000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000];
 
 // مخزن البيانات التراكمي
 let cachedData = {
